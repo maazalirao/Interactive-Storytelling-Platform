@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 
-const TextToSpeech = ({ content, urduContent, autoPlay = false }) => {
+const TextToSpeech = ({ content, autoPlay = false }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentRate, setCurrentRate] = useState(1.0);
   const [currentVoice, setCurrentVoice] = useState(null);
   const [availableVoices, setAvailableVoices] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [language, setLanguage] = useState('ur'); // Default to Urdu
   const utteranceRef = useRef(null);
   
   // Clean HTML content to get just text
@@ -28,20 +27,12 @@ const TextToSpeech = ({ content, urduContent, autoPlay = false }) => {
       if (voices.length > 0) {
         setAvailableVoices(voices);
         
-        // Try to set a default voice based on selected language
-        if (language === 'ur') {
-          // Look for Urdu or Hindi voice (closest commonly available)
-          const urduVoice = voices.find(voice => 
-            voice.lang.includes('ur') || voice.lang.includes('hi')
-          );
-          setCurrentVoice(urduVoice || voices[0]);
-        } else {
-          // English voice
-          const englishVoice = voices.find(voice => 
-            voice.lang.includes('en') && voice.name.includes('Female')
-          );
-          setCurrentVoice(englishVoice || voices[0]);
-        }
+        // Try to set a default English voice
+        const englishVoice = voices.find(voice => 
+          voice.lang.includes('en') && voice.name.includes('Female')
+        ) || voices[0];
+        
+        setCurrentVoice(englishVoice);
       }
     };
     
@@ -56,21 +47,18 @@ const TextToSpeech = ({ content, urduContent, autoPlay = false }) => {
     return () => {
       stopSpeech();
     };
-  }, [language]);
+  }, []);
   
   // Auto play when requested
   useEffect(() => {
-    if (autoPlay && ((language === 'en' && content) || (language === 'ur' && urduContent)) && currentVoice && !isPlaying) {
+    if (autoPlay && content && currentVoice && !isPlaying) {
       playSpeech();
     }
-  }, [autoPlay, content, urduContent, currentVoice, isPlaying, language]);
+  }, [autoPlay, content, currentVoice, isPlaying]);
   
   // Create and play speech
   const playSpeech = () => {
-    // Choose content based on selected language
-    const contentToSpeak = language === 'ur' ? urduContent : content;
-    
-    if (!contentToSpeak || !currentVoice) return;
+    if (!content || !currentVoice) return;
     
     const synth = window.speechSynthesis;
     setIsLoading(true);
@@ -79,12 +67,11 @@ const TextToSpeech = ({ content, urduContent, autoPlay = false }) => {
     stopSpeech();
     
     // Create a new utterance
-    const text = getCleanText(contentToSpeak);
+    const text = getCleanText(content);
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.voice = currentVoice;
     utterance.rate = currentRate;
     utterance.pitch = 1.0;
-    utterance.lang = language === 'ur' ? 'ur-PK' : 'en-US';
     
     // Set event handlers
     utterance.onstart = () => {
@@ -110,19 +97,6 @@ const TextToSpeech = ({ content, urduContent, autoPlay = false }) => {
     
     // Start speaking
     synth.speak(utterance);
-  };
-  
-  // Toggle language
-  const toggleLanguage = () => {
-    const newLanguage = language === 'ur' ? 'en' : 'ur';
-    setLanguage(newLanguage);
-    
-    // If already playing, stop current speech
-    if (isPlaying) {
-      stopSpeech();
-      // Wait a bit before starting in new language
-      setTimeout(() => playSpeech(), 300);
-    }
   };
   
   // Pause speech
@@ -174,38 +148,10 @@ const TextToSpeech = ({ content, urduContent, autoPlay = false }) => {
     }
   };
   
-  // Filter voices by current language
-  const filteredVoices = availableVoices.filter(voice => {
-    if (language === 'ur') {
-      // For Urdu, also include Hindi and other South Asian languages as fallback
-      return voice.lang.includes('ur') || voice.lang.includes('hi') || 
-             voice.lang.includes('pa') || voice.lang.includes('bn');
-    } else {
-      return voice.lang.includes('en');
-    }
-  });
-  
-  // If no language-specific voices found, show all voices
-  const voicesToShow = filteredVoices.length > 0 ? filteredVoices : availableVoices;
-  
   return (
     <div className="text-to-speech-controls bg-white dark:bg-gray-800 rounded-lg p-3 shadow-md border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Audio Narration</h3>
-          
-          {/* Language Toggle */}
-          <button 
-            onClick={toggleLanguage}
-            className={`text-xs px-2 py-1 rounded-full ${
-              language === 'ur' 
-                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
-                : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-            }`}
-          >
-            {language === 'ur' ? 'اردو' : 'English'}
-          </button>
-        </div>
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Audio Narration</h3>
         
         {/* Voice selection dropdown */}
         <select 
@@ -214,7 +160,7 @@ const TextToSpeech = ({ content, urduContent, autoPlay = false }) => {
           className="text-xs bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-gray-700 dark:text-gray-300"
           disabled={isPlaying}
         >
-          {voicesToShow.map(voice => (
+          {availableVoices.map(voice => (
             <option key={voice.name} value={voice.name}>
               {voice.name} ({voice.lang})
             </option>
@@ -231,7 +177,7 @@ const TextToSpeech = ({ content, urduContent, autoPlay = false }) => {
           {!isPlaying || isPaused ? (
             <button
               onClick={isPaused ? resumeSpeech : playSpeech}
-              disabled={isLoading || (!content && !urduContent) || availableVoices.length === 0}
+              disabled={isLoading || !content || availableVoices.length === 0}
               className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label={isPaused ? "Resume speech" : "Play speech"}
             >

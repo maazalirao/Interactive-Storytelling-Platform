@@ -7,8 +7,7 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null }) => {
   const [choices, setChoices] = useState([]);
   const [isRevealing, setIsRevealing] = useState(true);
   const [ambientSound, setAmbientSound] = useState(null);
-  const [themeColor, setThemeColor] = useState('#dc2626'); // Default to red for horror
-  const [currentLanguage, setCurrentLanguage] = useState('ur'); // Default to Urdu
+  const [themeColor, setThemeColor] = useState('#3b82f6'); // Default blue
   const audioRef = useRef(null);
   
   // Parse the story content and set the initial segment
@@ -25,9 +24,19 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null }) => {
       }
     }
     
-    // Horror themes for Urdu stories
-    setThemeColor('#dc2626'); // Red for horror
-    setAmbientSound('/sounds/horror-ambient.mp3');
+    // Set appropriate theme color based on story genre/tags
+    if (story?.tags) {
+      if (story.tags.includes('Horror')) {
+        setThemeColor('#dc2626'); // Red for horror
+        setAmbientSound('/sounds/horror-ambient.mp3');
+      } else if (story.tags.includes('Fantasy')) {
+        setThemeColor('#8b5cf6'); // Purple for fantasy
+        setAmbientSound('/sounds/fantasy-ambient.mp3');
+      } else if (story.tags.includes('Sci-Fi')) {
+        setThemeColor('#2dd4bf'); // Teal for sci-fi
+        setAmbientSound('/sounds/scifi-ambient.mp3');
+      }
+    }
     
     // Set revealing to false after initial load
     setTimeout(() => {
@@ -89,14 +98,6 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null }) => {
     const segment = story.paths.find(p => p.id === currentSegment);
     return segment ? segment.content : story.content;
   };
-  
-  // Get current Urdu content
-  const getCurrentUrduContent = () => {
-    if (!story?.urduContent) return '';
-    
-    const segment = story.paths.find(p => p.id === currentSegment);
-    return segment ? segment.urduContent : story.urduContent;
-  };
 
   return (
     <div className="story-reader relative" style={{ 
@@ -110,22 +111,6 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null }) => {
              style={{ background: themeColor, filter: 'blur(40px)' }}></div>
         <div className="absolute bottom-20 right-20 w-60 h-60 rounded-full opacity-10 animate-pulse" 
              style={{ background: themeColor, filter: 'blur(60px)', animationDelay: '1s' }}></div>
-      </div>
-      
-      {/* Horror themed elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        {/* Cobwebs in corners */}
-        <div className="absolute top-0 left-0 w-64 h-64 opacity-10">
-          <img src="https://i.ibb.co/6NrJWbf/cobweb.png" alt="" className="w-full h-full" />
-        </div>
-        <div className="absolute top-0 right-0 w-64 h-64 opacity-10 transform scale-x-[-1]">
-          <img src="https://i.ibb.co/6NrJWbf/cobweb.png" alt="" className="w-full h-full" />
-        </div>
-        
-        {/* Faint horror silhouette */}
-        <div className="absolute bottom-0 right-0 w-96 h-96 opacity-5">
-          <img src="https://i.ibb.co/Yj88nZ9/horror-silhouette.png" alt="" className="w-full h-full" />
-        </div>
       </div>
       
       {/* Audio element for ambient sound */}
@@ -147,39 +132,11 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null }) => {
       )}
       
       <div className="container mx-auto px-4 py-12 relative z-10">
-        {/* Urdu/English Toggle */}
-        <div className="max-w-3xl mx-auto mb-6">
-          <div className="flex justify-center mb-4">
-            <div className="inline-flex items-center p-1 bg-gray-800/50 rounded-lg">
-              <button
-                onClick={() => setCurrentLanguage('ur')}
-                className={`px-4 py-2 rounded-md text-sm font-medium ${
-                  currentLanguage === 'ur' 
-                    ? 'bg-red-600 text-white' 
-                    : 'text-white/70 hover:text-white'
-                }`}
-              >
-                اردو
-              </button>
-              <button
-                onClick={() => setCurrentLanguage('en')}
-                className={`px-4 py-2 rounded-md text-sm font-medium ${
-                  currentLanguage === 'en' 
-                    ? 'bg-red-600 text-white' 
-                    : 'text-white/70 hover:text-white'
-                }`}
-              >
-                English
-              </button>
-            </div>
-          </div>
-        </div>
-        
         {/* Story content */}
         <div className="max-w-3xl mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
-              key={`${currentSegment}-${currentLanguage}`}
+              key={currentSegment}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -187,16 +144,13 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null }) => {
               className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-8 mb-8"
             >
               <div 
-                className={`prose dark:prose-invert max-w-none ${currentLanguage === 'ur' ? 'text-right rtl' : ''}`}
-                dangerouslySetInnerHTML={{ __html: currentLanguage === 'ur' ? getCurrentUrduContent() : getCurrentContent() }}
+                className="prose dark:prose-invert max-w-none" 
+                dangerouslySetInnerHTML={{ __html: getCurrentContent() }}
               ></div>
               
               {/* Text to Speech Controls */}
               <div className="mt-6">
-                <TextToSpeech 
-                  content={getCurrentContent()} 
-                  urduContent={getCurrentUrduContent()}
-                />
+                <TextToSpeech content={getCurrentContent()} />
               </div>
             </motion.div>
           </AnimatePresence>
@@ -204,9 +158,7 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null }) => {
           {/* Choices */}
           {choices.length > 0 && (
             <div className="choices-container space-y-4 max-w-3xl mx-auto">
-              <h3 className={`text-xl font-medium text-center mb-4 text-white dark:text-gray-200 ${currentLanguage === 'ur' ? 'rtl' : ''}`}>
-                {currentLanguage === 'ur' ? 'آپ کیا کریں گے؟' : 'What will you do?'}
-              </h3>
+              <h3 className="text-xl font-medium text-center mb-4 text-white dark:text-gray-200">What will you do?</h3>
               {choices.map((choice, index) => (
                 <motion.div
                   key={choice.id}
@@ -216,12 +168,10 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null }) => {
                 >
                   <button
                     onClick={() => handleChoiceClick(choice.id)}
-                    className={`w-full text-left p-4 rounded-lg bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 shadow-md hover:shadow-lg transition-all duration-200 border-l-4 ${currentLanguage === 'ur' ? 'text-right rtl border-r-4 border-l-0' : ''}`}
+                    className="w-full text-left p-4 rounded-lg bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 shadow-md hover:shadow-lg transition-all duration-200 border-l-4"
                     style={{ borderColor: themeColor }}
                   >
-                    <p className="font-medium text-gray-800 dark:text-gray-200">
-                      {currentLanguage === 'ur' ? choice.urduLabel : choice.label}
-                    </p>
+                    <p className="font-medium text-gray-800 dark:text-gray-200">{choice.label}</p>
                   </button>
                 </motion.div>
               ))}

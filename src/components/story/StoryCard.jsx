@@ -116,32 +116,32 @@ const StoryCard = ({ story }) => {
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-4">
           {storyData.tags.map(tag => (
-            <span 
+              <span 
               key={tag} 
               className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         
         {/* Footer */}
         <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
-            <img 
-              src={storyData.author.avatar} 
-              alt={storyData.author.name}
+              <img 
+                src={storyData.author.avatar}
+                alt={storyData.author.name}
               className="w-7 h-7 rounded-full mr-2 border border-gray-200 dark:border-gray-600" 
-            />
+              />
             <span className="text-sm text-gray-700 dark:text-gray-300">
-              {storyData.author.name}
-            </span>
+                {storyData.author.name}
+              </span>
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            {formattedDate}
-          </div>
+              {formattedDate}
         </div>
-        
+      </div>
+      
         {/* Read Button - Visible on hover */}
         <motion.div 
           className="absolute right-4 bottom-4"
