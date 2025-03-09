@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import profileImage from '../../assets/images/maaz-profile.jpg'
+import AchievementSystem from './AchievementSystem'
 
 const UserProfile = ({ user = {} }) => {
   // Default user data for demo purposes
@@ -238,6 +239,11 @@ const UserProfile = ({ user = {} }) => {
             </div>
           </div>
         )}
+      </div>
+      
+      {/* Achievement System */}
+      <div className="mt-10">
+        <AchievementSystem />
       </div>
     </div>
   )

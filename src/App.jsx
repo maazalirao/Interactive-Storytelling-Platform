@@ -9,6 +9,7 @@ import Footer from './components/layout/Footer'
 // Pages
 import StoriesPage from './pages/StoriesPage'
 import CreateStoryPage from './pages/CreateStoryPage'
+import StoryReaderPage from './pages/StoryReaderPage'
 import UserProfile from './components/user/UserProfile'
 
 // Home page component
@@ -132,6 +133,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/stories" element={<StoriesPage />} />
+            <Route path="/stories/:storyId" element={<StoryReaderPage />} />
             <Route path="/create" element={<CreateStoryPage />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/community" element={<Community />} />
