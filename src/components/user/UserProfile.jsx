@@ -1,14 +1,15 @@
 import { useState } from 'react'
+import profileImage from '../../assets/images/maaz-profile.jpg'
 
 const UserProfile = ({ user = {} }) => {
   // Default user data for demo purposes
   const defaultUser = {
     id: '1',
-    username: 'storyteller',
-    name: 'Alex Johnson',
+    username: 'maazalirao',
+    name: 'Maaz Ali Rao',
     bio: 'Passionate storyteller exploring interactive narratives and branching storylines.',
-    avatar: 'https://i.pravatar.cc/150?img=11',
-    email: 'alex@storyverse.com',
+    avatar: profileImage,
+    email: 'maaz@storyverse.com',
     joined: '2023-05-15',
     storiesCreated: 12,
     followers: 248,
@@ -61,11 +62,19 @@ const UserProfile = ({ user = {} }) => {
         <div className="px-6 pt-4 pb-6 relative">
           <div className="flex flex-col md:flex-row items-center md:items-end">
             <div className="absolute -top-16 left-6 h-24 w-24 md:relative md:top-auto md:left-auto">
-              <img
-                src={userData.avatar}
-                alt={userData.name}
-                className="h-24 w-24 rounded-full border-4 border-white dark:border-gray-800 object-cover"
-              />
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 opacity-75 rounded-full blur-[2px] group-hover:blur-[4px] transition-all duration-300"></div>
+                <div className="absolute inset-0 border-2 border-cyan-300 rounded-full animate-pulse"></div>
+                <img
+                  src={userData.avatar}
+                  alt={userData.name}
+                  className="relative h-24 w-24 rounded-full border-4 border-white dark:border-gray-800 object-cover object-top"
+                  style={{ objectPosition: "center 25%" }}
+                />
+                <div className="absolute -bottom-1 -right-1 h-7 w-7 bg-green-500 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+              </div>
             </div>
             <div className="mt-8 md:mt-0 md:ml-4 text-center md:text-left">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
