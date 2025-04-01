@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TextToSpeech from './TextToSpeech';
 
-const StoryReader = ({ story, onChoiceSelected, initialPathId = null }) => {
+const StoryReader = ({ story, onChoiceSelected, initialPathId = null, fontSizeClass = 'text-base' }) => {
   const [currentSegment, setCurrentSegment] = useState(initialPathId || 0);
   const [choices, setChoices] = useState([]);
   const [isRevealing, setIsRevealing] = useState(true);
@@ -43,6 +43,22 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null }) => {
       setIsRevealing(false);
     }, 500);
   }, [story, initialPathId]);
+
+  // Add keyboard navigation for choices
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Number keys 1-9 for selecting choices
+      if (e.key >= '1' && e.key <= '9') {
+        const choiceIndex = parseInt(e.key) - 1;
+        if (choices[choiceIndex]) {
+          handleChoiceClick(choices[choiceIndex].id);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [choices]);
 
   // Play ambient sound
   useEffect(() => {
@@ -144,7 +160,7 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null }) => {
               className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-8 mb-8"
             >
               <div 
-                className="prose dark:prose-invert max-w-none" 
+                className={`prose dark:prose-invert max-w-none ${fontSizeClass}`}
                 dangerouslySetInnerHTML={{ __html: getCurrentContent() }}
               ></div>
               
@@ -170,8 +186,14 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null }) => {
                     onClick={() => handleChoiceClick(choice.id)}
                     className="w-full text-left p-4 rounded-lg bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 shadow-md hover:shadow-lg transition-all duration-200 border-l-4"
                     style={{ borderColor: themeColor }}
+                    aria-keyshortcuts={index < 9 ? `${index + 1}` : undefined}
                   >
-                    <p className="font-medium text-gray-800 dark:text-gray-200">{choice.label}</p>
+                    <div className="flex items-center">
+                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm mr-3 flex-shrink-0">
+                        {index + 1}
+                      </span>
+                      <p className="font-medium text-gray-800 dark:text-gray-200">{choice.label}</p>
+                    </div>
                   </button>
                 </motion.div>
               ))}
