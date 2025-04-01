@@ -21,6 +21,13 @@ const StoryReaderPage = () => {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [currentPathId, setCurrentPathId] = useState(null);
   const [fontSize, setFontSize] = useState(FONT_SIZES.MEDIUM);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check for user preference from localStorage or system preference
+    return localStorage.getItem('darkMode') === 'true' || 
+           (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+  const [readingTime, setReadingTime] = useState(0);
+  const [readingTimer, setReadingTimer] = useState(null);
   
   // Fetch story data
   useEffect(() => {
@@ -92,6 +99,10 @@ const StoryReaderPage = () => {
         if (history.length > 0) {
           setCurrentPathId(history[history.length - 1]);
         }
+
+        // Load reading time from localStorage
+        const savedReadingTime = parseInt(localStorage.getItem(`readingTime_${storyId}`) || '0');
+        setReadingTime(savedReadingTime);
       } catch (err) {
         setError('Failed to load story data. Please try again later.');
         setIsLoading(false);
@@ -100,6 +111,63 @@ const StoryReaderPage = () => {
     
     return () => clearTimeout(timeout);
   }, [storyId]);
+  
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    localStorage.setItem('darkMode', (!isDarkMode).toString());
+    
+    // Apply dark mode to document
+    if (!isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
+  // Apply dark mode on mount
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  // Track reading time
+  useEffect(() => {
+    if (story && !isLoading) {
+      // Start timer when story is loaded
+      const timer = setInterval(() => {
+        setReadingTime(prevTime => {
+          const newTime = prevTime + 1;
+          localStorage.setItem(`readingTime_${storyId}`, newTime.toString());
+          return newTime;
+        });
+      }, 1000);
+      
+      setReadingTimer(timer);
+      
+      return () => clearInterval(timer);
+    }
+  }, [story, isLoading, storyId]);
+  
+  // Format reading time
+  const formatReadingTime = (seconds) => {
+    if (seconds < 60) return `${seconds}s`;
+    
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    
+    if (minutes < 60) {
+      return `${minutes}m ${remainingSeconds}s`;
+    }
+    
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    
+    return `${hours}h ${remainingMinutes}m ${remainingSeconds}s`;
+  };
   
   // Add keyboard shortcut handling
   useEffect(() => {
@@ -123,6 +191,9 @@ const StoryReaderPage = () => {
               setCurrentPathId(null);
             }
           }
+          break;
+        case 'd': // Toggle dark mode
+          toggleDarkMode();
           break;
         default:
           break;
@@ -193,6 +264,15 @@ const StoryReaderPage = () => {
     else setFontSize(FONT_SIZES.SMALL);
   };
   
+  // Clean up interval on unmount
+  useEffect(() => {
+    return () => {
+      if (readingTimer) {
+        clearInterval(readingTimer);
+      }
+    };
+  }, [readingTimer]);
+  
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
@@ -235,6 +315,22 @@ const StoryReaderPage = () => {
             </Link>
             
             <div className="flex items-center gap-3">
+              <button 
+                onClick={toggleDarkMode}
+                className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {isDarkMode ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                )}
+              </button>
+            
               <button 
                 onClick={cycleFontSize}
                 className="p-2 rounded-full hover:bg-white/10 transition-colors"
@@ -281,6 +377,11 @@ const StoryReaderPage = () => {
                 className="w-8 h-8 rounded-full mr-2" 
               />
               <span className="text-white/80">By {story.author.name}</span>
+            </div>
+            
+            {/* Reading time */}
+            <div className="mt-3 text-white/60 text-sm">
+              Reading time: {formatReadingTime(readingTime)}
             </div>
           </motion.div>
         </div>
@@ -342,6 +443,7 @@ const StoryReaderPage = () => {
             <div className="mt-2 ml-2 space-y-1">
               <p><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">1-9</kbd> Select corresponding choice</p>
               <p><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">B</kbd> Toggle bookmark</p>
+              <p><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">D</kbd> Toggle dark mode</p>
               <p><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">F</kbd> Change font size</p>
               <p><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">R</kbd> Reset progress</p>
             </div>

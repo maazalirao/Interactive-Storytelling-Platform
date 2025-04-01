@@ -3,10 +3,13 @@ import { useState, useEffect, useRef } from 'react';
 const TextToSpeech = ({ content, autoPlay = false }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [currentRate, setCurrentRate] = useState(1.0);
+  const [currentRate, setCurrentRate] = useState(() => {
+    return parseFloat(localStorage.getItem('tts_rate') || '1.0');
+  });
   const [currentVoice, setCurrentVoice] = useState(null);
   const [availableVoices, setAvailableVoices] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeWord, setActiveWord] = useState(-1);
   const utteranceRef = useRef(null);
   
   // Clean HTML content to get just text
@@ -27,12 +30,22 @@ const TextToSpeech = ({ content, autoPlay = false }) => {
       if (voices.length > 0) {
         setAvailableVoices(voices);
         
-        // Try to set a default English voice
-        const englishVoice = voices.find(voice => 
-          voice.lang.includes('en') && voice.name.includes('Female')
-        ) || voices[0];
+        // Try to load saved voice preference
+        const savedVoiceName = localStorage.getItem('tts_voice');
+        let selectedVoice;
         
-        setCurrentVoice(englishVoice);
+        if (savedVoiceName) {
+          selectedVoice = voices.find(voice => voice.name === savedVoiceName);
+        }
+        
+        // If no saved voice or saved voice not found, use default English voice
+        if (!selectedVoice) {
+          selectedVoice = voices.find(voice => 
+            voice.lang.includes('en') && voice.name.includes('Female')
+          ) || voices[0];
+        }
+        
+        setCurrentVoice(selectedVoice);
       }
     };
     
@@ -73,16 +86,29 @@ const TextToSpeech = ({ content, autoPlay = false }) => {
     utterance.rate = currentRate;
     utterance.pitch = 1.0;
     
+    // Word boundary detection
+    const words = text.split(/\s+/);
+    let wordIndex = 0;
+    
+    utterance.onboundary = (event) => {
+      if (event.name === 'word') {
+        setActiveWord(wordIndex);
+        wordIndex++;
+      }
+    };
+    
     // Set event handlers
     utterance.onstart = () => {
       setIsPlaying(true);
       setIsPaused(false);
       setIsLoading(false);
+      setActiveWord(0);
     };
     
     utterance.onend = () => {
       setIsPlaying(false);
       setIsPaused(false);
+      setActiveWord(-1);
     };
     
     utterance.onerror = (event) => {
@@ -90,6 +116,7 @@ const TextToSpeech = ({ content, autoPlay = false }) => {
       setIsPlaying(false);
       setIsPaused(false);
       setIsLoading(false);
+      setActiveWord(-1);
     };
     
     // Store reference to current utterance
@@ -120,6 +147,7 @@ const TextToSpeech = ({ content, autoPlay = false }) => {
     setIsPlaying(false);
     setIsPaused(false);
     setIsLoading(false);
+    setActiveWord(-1);
   };
   
   // Change voice
@@ -128,6 +156,9 @@ const TextToSpeech = ({ content, autoPlay = false }) => {
     const selectedVoice = availableVoices.find(voice => voice.name === voiceName);
     if (selectedVoice) {
       setCurrentVoice(selectedVoice);
+      
+      // Save preference to localStorage
+      localStorage.setItem('tts_voice', selectedVoice.name);
       
       // If already playing, restart with new voice
       if (isPlaying) {
@@ -141,6 +172,9 @@ const TextToSpeech = ({ content, autoPlay = false }) => {
   const handleRateChange = (newRate) => {
     setCurrentRate(parseFloat(newRate));
     
+    // Save preference to localStorage
+    localStorage.setItem('tts_rate', newRate.toString());
+    
     // If already playing, restart with new rate
     if (isPlaying) {
       stopSpeech();
@@ -151,7 +185,17 @@ const TextToSpeech = ({ content, autoPlay = false }) => {
   return (
     <div className="text-to-speech-controls bg-white dark:bg-gray-800 rounded-lg p-3 shadow-md border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Audio Narration</h3>
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+          Audio Narration
+          {isPlaying && !isPaused && (
+            <span className="ml-2 flex items-center">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              </span>
+            </span>
+          )}
+        </h3>
         
         {/* Voice selection dropdown */}
         <select 

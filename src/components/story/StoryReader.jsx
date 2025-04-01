@@ -8,6 +8,11 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null, fontSizeCl
   const [isRevealing, setIsRevealing] = useState(true);
   const [ambientSound, setAmbientSound] = useState(null);
   const [themeColor, setThemeColor] = useState('#3b82f6'); // Default blue
+  const [pathsExplored, setPathsExplored] = useState(() => {
+    // Load from localStorage
+    return JSON.parse(localStorage.getItem(`explored_paths_${story?.id}`) || '[]');
+  });
+  const [selectedChoice, setSelectedChoice] = useState(null);
   const audioRef = useRef(null);
   
   // Parse the story content and set the initial segment
@@ -74,9 +79,16 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null, fontSizeCl
     };
   }, [ambientSound]);
 
+  // Calculate story completion percentage
+  const calculateCompletion = () => {
+    if (!story?.paths) return 0;
+    return Math.round((pathsExplored.length / story.paths.length) * 100);
+  };
+
   // Handle selecting a choice
   const handleChoiceClick = (choiceId) => {
     setIsRevealing(true);
+    setSelectedChoice(choiceId);
     
     // Find the next segment based on the choice
     const nextSegment = story.paths.find(path => path.id === choiceId);
@@ -87,6 +99,14 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null, fontSizeCl
         setCurrentSegment(nextSegment.id);
         setChoices(story.paths.filter(path => path.parentId === nextSegment.id));
         setIsRevealing(false);
+        setSelectedChoice(null);
+        
+        // Track explored paths
+        if (!pathsExplored.includes(nextSegment.id)) {
+          const updatedPaths = [...pathsExplored, nextSegment.id];
+          setPathsExplored(updatedPaths);
+          localStorage.setItem(`explored_paths_${story?.id}`, JSON.stringify(updatedPaths));
+        }
         
         // Notify parent component
         if (onChoiceSelected) {
@@ -147,6 +167,18 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null, fontSizeCl
         </>
       )}
       
+      {/* Story completion indicator */}
+      <div className="absolute top-4 left-4 z-10">
+        <div className="bg-black/20 backdrop-blur-sm rounded-full p-2 text-white flex items-center">
+          <svg className="w-5 h-5 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 6.25278V19.2528M12 6.25278C10.8321 6.25278 9.75704 5.79246 8.96127 4.9967C8.16551 4.20094 7.70518 3.12584 7.70518 1.95797H16.2948C16.2948 3.12584 15.8345 4.20094 15.0387 4.9967C14.243 5.79246 13.1679 6.25278 12 6.25278ZM12 19.2528C13.1679 19.2528 14.243 19.7131 15.0387 20.5089C15.8345 21.3046 16.2948 22.3797 16.2948 23.5476H7.70518C7.70518 22.3797 8.16551 21.3046 8.96127 20.5089C9.75704 19.7131 10.8321 19.2528 12 19.2528Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M20.6 12C20.6 16.7496 16.7496 20.6 12 20.6C7.25035 20.6 3.39999 16.7496 3.39999 12C3.39999 7.25035 7.25035 3.39999 12 3.39999C16.7496 3.39999 20.6 7.25035 20.6 12Z" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M17.657 12C17.657 15.1675 15.1675 17.657 12 17.657C8.83249 17.657 6.34299 15.1675 6.34299 12C6.34299 8.83249 8.83249 6.34299 12 6.34299C15.1675 6.34299 17.657 8.83249 17.657 12Z" fill="currentColor" fillOpacity="0.3"/>
+          </svg>
+          <span className="text-xs font-medium">{calculateCompletion()}% explored</span>
+        </div>
+      </div>
+      
       <div className="container mx-auto px-4 py-12 relative z-10">
         {/* Story content */}
         <div className="max-w-3xl mx-auto">
@@ -184,15 +216,21 @@ const StoryReader = ({ story, onChoiceSelected, initialPathId = null, fontSizeCl
                 >
                   <button
                     onClick={() => handleChoiceClick(choice.id)}
-                    className="w-full text-left p-4 rounded-lg bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 shadow-md hover:shadow-lg transition-all duration-200 border-l-4"
+                    className={`w-full text-left p-4 rounded-lg bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 shadow-md hover:shadow-lg transition-all duration-200 border-l-4 ${selectedChoice === choice.id ? 'border-l-8 bg-white dark:bg-gray-700' : ''}`}
                     style={{ borderColor: themeColor }}
                     aria-keyshortcuts={index < 9 ? `${index + 1}` : undefined}
+                    disabled={selectedChoice !== null}
                   >
                     <div className="flex items-center">
                       <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm mr-3 flex-shrink-0">
                         {index + 1}
                       </span>
                       <p className="font-medium text-gray-800 dark:text-gray-200">{choice.label}</p>
+                      {pathsExplored.includes(choice.id) && (
+                        <span className="ml-auto bg-gray-200 dark:bg-gray-700 text-xs rounded-full px-2 py-1">
+                          Visited
+                        </span>
+                      )}
                     </div>
                   </button>
                 </motion.div>
