@@ -88,3 +88,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - All the amazing open-source libraries that made this project possible
 - The creative writing community for inspiration
 "# Fix contribution tracking" 
+# Fixing contribution tracking with correct date
