@@ -17,10 +17,5 @@ Based on the analysis of your Git config and commit history, I've identified tha
    ```
    git config --global user.email "abrahamlincoln1027@gmail.com"
    git config --global user.name "Maaz Ali"
-   
-   # Make a small change
-   echo "# Fixed contribution tracking" >> README.md
-   
-
 
 
