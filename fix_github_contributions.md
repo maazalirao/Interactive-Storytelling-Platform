@@ -21,13 +21,6 @@ Based on the analysis of your Git config and commit history, I've identified tha
    # Make a small change
    echo "# Fixed contribution tracking" >> README.md
    
-   # Add and commit
-   git add README.md
-   git commit -m "Fix contribution tracking with correct date"
-   
-   # Push to GitHub
-   git push
-   ```
 
 
 
