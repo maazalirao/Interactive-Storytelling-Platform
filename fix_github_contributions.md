@@ -37,4 +37,3 @@ Based on the analysis of your Git config and commit history, I've identified tha
 - Commits must be made to the default branch (main/master)
 - Email in Git config must match a verified email on your GitHub account
 - Commits must have correct dates (not future dates)
-- Repository must be connected to your GitHub account 
