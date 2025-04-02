@@ -87,8 +87,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - All the amazing open-source libraries that made this project possible
 - The creative writing community for inspiration
-
-## Recent Updates
-- Added contribution tracking fixes
-- Updated documentation
-- Enhanced user experience
+"# Fix contribution tracking" 
+# Fixing contribution tracking with correct date
