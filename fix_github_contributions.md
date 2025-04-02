@@ -34,6 +34,3 @@ Based on the analysis of your Git config and commit history, I've identified tha
 
 ## Common Requirements for GitHub Contributions:
 
-- Commits must be made to the default branch (main/master)
-- Email in Git config must match a verified email on your GitHub account
-- Commits must have correct dates
