@@ -13,9 +13,3 @@ Based on the analysis of your Git config and commit history, I've identified tha
    - Make sure "Include private contributions on my profile" is checked
    - Set your system date and time correctly (it's currently set to 2025)
 
-3. Create a new commit with the correct date:
-   ```
-   git config --global user.email "abrahamlincoln1027@gmail.com"
-   git config --global user.name "Maaz Ali"
-
-
