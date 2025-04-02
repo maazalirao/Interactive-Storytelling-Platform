@@ -29,8 +29,5 @@ Based on the analysis of your Git config and commit history, I've identified tha
    git push
    ```
 
-4. Wait up to 24 hours:
-   - GitHub may take up to 24 hours to update your contribution graph
 
-## Common Requirements for GitHub Contributions:
 
